@@ -1003,146 +1003,146 @@ import argparse
 from pathlib import Path
 from typing import Dict, List, Tuple, Any
 
-    {os.linesep.join(solution_classes)}
+{os.linesep.join(solution_classes)}
 
-    def main():
-        \"\"\"Test all solutions and collect metrics\"\"\"
-        parser = argparse.ArgumentParser(description="Test LLM tournament solutions")
-        parser.add_argument("--input", type=str, required=True, help="Input file to test on")
-        parser.add_argument("--output-dir", type=str, default="output_results_for_each_round_and_model",
-                        help="Directory for results")
-        args = parser.parse_args()
-        
-        # Create output directory
-        output_dir = Path(args.output_dir)
-        output_dir.mkdir(exist_ok=True, parents=True)
-        
-        # Read the input file
-        with open(args.input, "r", encoding="utf-8") as f:
-            input_text = f.read()
-        
-        def count_lines(text: str) -> int:
-            \"\"\"Count the number of lines in a text\"\"\"
-            return len(text.splitlines())
+def main():
+    \"\"\"Test all solutions and collect metrics\"\"\"
+    parser = argparse.ArgumentParser(description="Test LLM tournament solutions")
+    parser.add_argument("--input", type=str, required=True, help="Input file to test on")
+    parser.add_argument("--output-dir", type=str, default="output_results_for_each_round_and_model",
+                    help="Directory for results")
+    args = parser.parse_args()
+    
+    # Create output directory
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(exist_ok=True, parents=True)
+    
+    # Read the input file
+    with open(args.input, "r", encoding="utf-8") as f:
+        input_text = f.read()
+    
+    def count_lines(text: str) -> int:
+        \"\"\"Count the number of lines in a text\"\"\"
+        return len(text.splitlines())
 
-        def count_chars(text: str) -> int:
-            \"\"\"Count the number of characters in a text\"\"\"
-            return len(text)        
-        
-        # Get input file metrics
-        input_lines = count_lines(input_text)
-        input_chars = count_chars(input_text)
-        print(f"Input file: {{args.input}}")
-        print(f"Input lines: {{input_lines}}")
-        print(f"Input chars: {{input_chars}}")
-        
-        # List of all solution classes
-        solution_classes = [
-            {", ".join([s.split("class ")[1].split("(")[0].split(":")[0].strip() for s in solution_classes if "class " in s])}
-        ]
-        
-        # Test each solution
-        metrics = []
-        
-        for solution_class in solution_classes:
-            class_name = solution_class.__name__
-            print(f"\\nTesting {{class_name}}...")
+    def count_chars(text: str) -> int:
+        \"\"\"Count the number of characters in a text\"\"\"
+        return len(text)        
+    
+    # Get input file metrics
+    input_lines = count_lines(input_text)
+    input_chars = count_chars(input_text)
+    print(f"Input file: {{args.input}}")
+    print(f"Input lines: {{input_lines}}")
+    print(f"Input chars: {{input_chars}}")
+    
+    # List of all solution classes
+    solution_classes = [
+        {", ".join([s.split("class ")[1].split("(")[0].split(":")[0].strip() for s in solution_classes if "class " in s])}
+    ]
+    
+    # Test each solution
+    metrics = []
+    
+    for solution_class in solution_classes:
+        class_name = solution_class.__name__
+        print(f"\\nTesting {{class_name}}...")
 
-            # Extract model name and round number
-            parts = class_name.split("Round")
-            model_name = parts[0].replace("_", "-").lower()
-            round_num = parts[1].split("Solution")[0]
+        # Extract model name and round number
+        parts = class_name.split("Round")
+        model_name = parts[0].replace("_", "-").lower()
+        round_num = parts[1].split("Solution")[0]
+        
+        try:
+            # Apply the solution
+            start_time = time.time()
+            result = solution_class.solve(input_text)
+            execution_time = time.time() - start_time
             
-            try:
-                # Apply the solution
-                start_time = time.time()
-                result = solution_class.solve(input_text)
-                execution_time = time.time() - start_time
-                
-                # Save the result
-                output_filename = f"sample_file_output__{{model_name}}_round_{{round_num}}.md"
-                output_path = output_dir / output_filename
-                
-                with open(output_path, "w", encoding="utf-8") as f:
-                    f.write(result)
-                    
-                # Calculate metrics
-                output_lines = count_lines(result)
-                output_chars = count_chars(result)
-                output_size_kb = len(result) / 1024
-                
-                # Store metrics
-                solution_metrics = {{
-                    "model": model_name,
-                    "round": round_num,
-                    "execution_time": round(execution_time, 2),
-                    "output_lines": output_lines,
-                    "output_chars": output_chars,
-                    "output_size_kb": round(output_size_kb, 2),
-                    "lines_ratio": round(output_lines / input_lines, 2),
-                    "chars_ratio": round(output_chars / input_chars, 2)
-                }}
-                
-                metrics.append(solution_metrics)
-                
-                # Print metrics
-                print(f"  Execution time: {{solution_metrics['execution_time']}}s")
-                print(f"  Output lines: {{output_lines}}")
-                print(f"  Output size: {{solution_metrics['output_size_kb']}} KB")
-                print(f"  Output saved to: {{output_path}}")
-                
-            except Exception as e:
-                print(f"  Error testing {{class_name}}: {{str(e)}}")
-
-        # Save metrics
-        metrics_path = output_dir.parent / "metrics" / "test_metrics.json"
-        os.makedirs(os.path.dirname(metrics_path), exist_ok=True)
-        
-        with open(metrics_path, "w", encoding="utf-8") as f:
-            json.dump(metrics, f, indent=2)
+            # Save the result
+            output_filename = f"sample_file_output__{{model_name}}_round_{{round_num}}.md"
+            output_path = output_dir / output_filename
             
-        print(f"\\nMetrics saved to: {{metrics_path}}")
+            with open(output_path, "w", encoding="utf-8") as f:
+                f.write(result)
+                
+            # Calculate metrics
+            output_lines = count_lines(result)
+            output_chars = count_chars(result)
+            output_size_kb = len(result) / 1024
+            
+            # Store metrics
+            solution_metrics = {{
+                "model": model_name,
+                "round": round_num,
+                "execution_time": round(execution_time, 2),
+                "output_lines": output_lines,
+                "output_chars": output_chars,
+                "output_size_kb": round(output_size_kb, 2),
+                "lines_ratio": round(output_lines / input_lines, 2),
+                "chars_ratio": round(output_chars / input_chars, 2)
+            }}
+            
+            metrics.append(solution_metrics)
+            
+            # Print metrics
+            print(f"  Execution time: {{solution_metrics['execution_time']}}s")
+            print(f"  Output lines: {{output_lines}}")
+            print(f"  Output size: {{solution_metrics['output_size_kb']}} KB")
+            print(f"  Output saved to: {{output_path}}")
+            
+        except Exception as e:
+            print(f"  Error testing {{class_name}}: {{str(e)}}")
+
+    # Save metrics
+    metrics_path = output_dir.parent / "metrics" / "test_metrics.json"
+    os.makedirs(os.path.dirname(metrics_path), exist_ok=True)
+    
+    with open(metrics_path, "w", encoding="utf-8") as f:
+        json.dump(metrics, f, indent=2)
         
-    if __name__ == "__main__":
-        main()
-    """
+    print(f"\\nMetrics saved to: {{metrics_path}}")
+    
+if __name__ == "__main__":
+    main()
+"""
         
         # Create a test runner script (unchanged)
         test_runner = f"""#!/usr/bin/env python3
-    \"\"\"
-    LLM Tournament Test Runner
+\"\"\"
+LLM Tournament Test Runner
 
-    This script runs the test suite on the provided test file.
-    \"\"\"
+This script runs the test suite on the provided test file.
+\"\"\"
 
-    import os
-    import subprocess
-    import argparse
-    from pathlib import Path
+import os
+import subprocess
+import argparse
+from pathlib import Path
 
-    def main():
-        \"\"\"Run the test suite\"\"\"
-        parser = argparse.ArgumentParser(description="Run LLM tournament tests")
-        parser.add_argument("--test-file", type=str, required=True, help="File to test on")
-        args = parser.parse_args()
-        
-        # Path to the test script
-        test_script = Path(__file__).parent / "test_all_solutions.py"
-        
-        # Run the test script
-        cmd = [
-            "python",
-            str(test_script),
-            "--input", args.test_file,
-            "--output-dir", "output_results_for_each_round_and_model"
-        ]
-        
-        print(f"Running: {{' '.join(cmd)}}")
-        subprocess.run(cmd, check=True)
-        
-    if __name__ == "__main__":
-        main()
-    """
+def main():
+    \"\"\"Run the test suite\"\"\"
+    parser = argparse.ArgumentParser(description="Run LLM tournament tests")
+    parser.add_argument("--test-file", type=str, required=True, help="File to test on")
+    args = parser.parse_args()
+    
+    # Path to the test script
+    test_script = Path(__file__).parent / "test_all_solutions.py"
+    
+    # Run the test script
+    cmd = [
+        "python",
+        str(test_script),
+        "--input", args.test_file,
+        "--output-dir", "output_results_for_each_round_and_model"
+    ]
+    
+    print(f"Running: {{' '.join(cmd)}}")
+    subprocess.run(cmd, check=True)
+    
+if __name__ == "__main__":
+    main()
+"""
         
         # Save the test script
         test_script_path = self.output_dir / "test_all_solutions.py"

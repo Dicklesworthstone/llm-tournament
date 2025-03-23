@@ -1,0 +1,378 @@
+{
+  "start_time": "2025-03-23T07:51:23.191095",
+  "models": [
+    "o3_mini",
+    "gpt4o",
+    "claude37",
+    "mistral_large"
+  ],
+  "rounds": {
+    "0": {
+      "timestamp": "2025-03-23T07:51:23.197104",
+      "models": {
+        "o3_mini": {
+          "response_size_kb": 9.32,
+          "response_lines": 222,
+          "code_size_kb": 5.91,
+          "code_lines": 159,
+          "timestamp": "2025-03-23T07:51:23.191492",
+          "function_count": 6,
+          "class_count": 1,
+          "import_count": 5,
+          "decision_points": 34,
+          "complexity_estimate": 5.666666666666667
+        },
+        "gpt4o": {
+          "response_size_kb": 5.23,
+          "response_lines": 127,
+          "code_size_kb": 2.99,
+          "code_lines": 81,
+          "timestamp": "2025-03-23T07:51:23.193557",
+          "function_count": 2,
+          "class_count": 1,
+          "import_count": 6,
+          "decision_points": 15,
+          "complexity_estimate": 7.5
+        },
+        "claude37": {
+          "response_size_kb": 13.21,
+          "response_lines": 378,
+          "code_size_kb": 11.77,
+          "code_lines": 317,
+          "timestamp": "2025-03-23T07:51:23.194237",
+          "function_count": 11,
+          "class_count": 1,
+          "import_count": 9,
+          "decision_points": 75,
+          "complexity_estimate": 6.818181818181818
+        },
+        "mistral_large": {
+          "response_size_kb": 5.93,
+          "response_lines": 168,
+          "code_size_kb": 3.04,
+          "code_lines": 86,
+          "timestamp": "2025-03-23T07:51:23.196497",
+          "function_count": 6,
+          "class_count": 1,
+          "import_count": 8,
+          "decision_points": 17,
+          "complexity_estimate": 2.8333333333333335
+        }
+      },
+      "aggregate": {
+        "avg_code_size_kb": 5.93,
+        "avg_code_lines": 160.75,
+        "max_code_size_kb": 11.77,
+        "max_code_lines": 317,
+        "min_code_size_kb": 2.99,
+        "min_code_lines": 81
+      }
+    },
+    "1": {
+      "timestamp": "2025-03-23T07:51:23.205390",
+      "models": {
+        "o3_mini": {
+          "response_size_kb": 13.23,
+          "response_lines": 331,
+          "code_size_kb": 11.09,
+          "code_lines": 274,
+          "timestamp": "2025-03-23T07:51:23.197900",
+          "function_count": 10,
+          "class_count": 1,
+          "import_count": 8,
+          "decision_points": 61,
+          "complexity_estimate": 6.1
+        },
+        "gpt4o": {
+          "response_size_kb": 6.02,
+          "response_lines": 170,
+          "code_size_kb": 5.53,
+          "code_lines": 155,
+          "timestamp": "2025-03-23T07:51:23.200095",
+          "function_count": 9,
+          "class_count": 1,
+          "import_count": 7,
+          "decision_points": 32,
+          "complexity_estimate": 3.5555555555555554
+        },
+        "claude37": {
+          "response_size_kb": 14.63,
+          "response_lines": 453,
+          "code_size_kb": 17.65,
+          "code_lines": 500,
+          "timestamp": "2025-03-23T07:51:23.201089",
+          "function_count": 14,
+          "class_count": 1,
+          "import_count": 10,
+          "decision_points": 102,
+          "complexity_estimate": 7.285714285714286
+        },
+        "mistral_large": {
+          "response_size_kb": 5.8,
+          "response_lines": 162,
+          "code_size_kb": 3.44,
+          "code_lines": 98,
+          "timestamp": "2025-03-23T07:51:23.204287",
+          "function_count": 6,
+          "class_count": 1,
+          "import_count": 8,
+          "decision_points": 19,
+          "complexity_estimate": 3.1666666666666665
+        }
+      },
+      "aggregate": {
+        "avg_code_size_kb": 9.43,
+        "avg_code_lines": 256.75,
+        "max_code_size_kb": 17.65,
+        "max_code_lines": 500,
+        "min_code_size_kb": 3.44,
+        "min_code_lines": 98
+      }
+    },
+    "2": {
+      "timestamp": "2025-03-23T07:51:26.215155",
+      "models": {
+        "o3_mini": {
+          "response_size_kb": 12.21,
+          "response_lines": 288,
+          "code_size_kb": 10.38,
+          "code_lines": 252,
+          "timestamp": "2025-03-23T07:51:26.206621",
+          "function_count": 11,
+          "class_count": 1,
+          "import_count": 8,
+          "decision_points": 55,
+          "complexity_estimate": 5.0
+        },
+        "gpt4o": {
+          "response_size_kb": 8.31,
+          "response_lines": 223,
+          "code_size_kb": 7.64,
+          "code_lines": 207,
+          "timestamp": "2025-03-23T07:51:26.208569",
+          "function_count": 14,
+          "class_count": 1,
+          "import_count": 10,
+          "decision_points": 50,
+          "complexity_estimate": 3.5714285714285716
+        },
+        "claude37": {
+          "response_size_kb": 14.17,
+          "response_lines": 449,
+          "code_size_kb": 15.89,
+          "code_lines": 453,
+          "timestamp": "2025-03-23T07:51:26.209734",
+          "function_count": 13,
+          "class_count": 1,
+          "import_count": 10,
+          "decision_points": 101,
+          "complexity_estimate": 7.769230769230769
+        },
+        "mistral_large": {
+          "response_size_kb": 14.38,
+          "response_lines": 426,
+          "code_size_kb": 15.92,
+          "code_lines": 456,
+          "timestamp": "2025-03-23T07:51:26.212464",
+          "function_count": 14,
+          "class_count": 1,
+          "import_count": 12,
+          "decision_points": 99,
+          "complexity_estimate": 7.071428571428571
+        }
+      },
+      "aggregate": {
+        "avg_code_size_kb": 12.46,
+        "avg_code_lines": 342,
+        "max_code_size_kb": 15.92,
+        "max_code_lines": 456,
+        "min_code_size_kb": 7.64,
+        "min_code_lines": 207
+      }
+    },
+    "3": {
+      "timestamp": "2025-03-23T07:51:29.226581",
+      "models": {
+        "o3_mini": {
+          "response_size_kb": 16.6,
+          "response_lines": 439,
+          "code_size_kb": 15.14,
+          "code_lines": 393,
+          "timestamp": "2025-03-23T07:51:29.216455",
+          "function_count": 14,
+          "class_count": 1,
+          "import_count": 10,
+          "decision_points": 87,
+          "complexity_estimate": 6.214285714285714
+        },
+        "gpt4o": {
+          "response_size_kb": 7.79,
+          "response_lines": 224,
+          "code_size_kb": 7.87,
+          "code_lines": 217,
+          "timestamp": "2025-03-23T07:51:29.219160",
+          "function_count": 14,
+          "class_count": 1,
+          "import_count": 10,
+          "decision_points": 50,
+          "complexity_estimate": 3.5714285714285716
+        },
+        "claude37": {
+          "response_size_kb": 14.42,
+          "response_lines": 454,
+          "code_size_kb": 16.84,
+          "code_lines": 477,
+          "timestamp": "2025-03-23T07:51:29.220380",
+          "function_count": 13,
+          "class_count": 1,
+          "import_count": 10,
+          "decision_points": 106,
+          "complexity_estimate": 8.153846153846153
+        },
+        "mistral_large": {
+          "response_size_kb": 14.4,
+          "response_lines": 426,
+          "code_size_kb": 16.3,
+          "code_lines": 477,
+          "timestamp": "2025-03-23T07:51:29.223355",
+          "function_count": 14,
+          "class_count": 1,
+          "import_count": 12,
+          "decision_points": 101,
+          "complexity_estimate": 7.214285714285714
+        }
+      },
+      "aggregate": {
+        "avg_code_size_kb": 14.04,
+        "avg_code_lines": 391,
+        "max_code_size_kb": 16.84,
+        "max_code_lines": 477,
+        "min_code_size_kb": 7.87,
+        "min_code_lines": 217
+      }
+    },
+    "4": {
+      "timestamp": "2025-03-23T07:51:32.237328",
+      "models": {
+        "o3_mini": {
+          "response_size_kb": 15.73,
+          "response_lines": 396,
+          "code_size_kb": 12.7,
+          "code_lines": 351,
+          "timestamp": "2025-03-23T07:51:32.227864",
+          "function_count": 14,
+          "class_count": 1,
+          "import_count": 10,
+          "decision_points": 85,
+          "complexity_estimate": 6.071428571428571
+        },
+        "gpt4o": {
+          "response_size_kb": 7.94,
+          "response_lines": 221,
+          "code_size_kb": 7.76,
+          "code_lines": 214,
+          "timestamp": "2025-03-23T07:51:32.230131",
+          "function_count": 14,
+          "class_count": 1,
+          "import_count": 10,
+          "decision_points": 48,
+          "complexity_estimate": 3.4285714285714284
+        },
+        "claude37": {
+          "response_size_kb": 14.24,
+          "response_lines": 450,
+          "code_size_kb": 16.24,
+          "code_lines": 460,
+          "timestamp": "2025-03-23T07:51:32.231342",
+          "function_count": 14,
+          "class_count": 1,
+          "import_count": 10,
+          "decision_points": 100,
+          "complexity_estimate": 7.142857142857143
+        },
+        "mistral_large": {
+          "response_size_kb": 14.4,
+          "response_lines": 426,
+          "code_size_kb": 15.96,
+          "code_lines": 459,
+          "timestamp": "2025-03-23T07:51:32.234157",
+          "function_count": 14,
+          "class_count": 1,
+          "import_count": 10,
+          "decision_points": 99,
+          "complexity_estimate": 7.071428571428571
+        }
+      },
+      "aggregate": {
+        "avg_code_size_kb": 13.16,
+        "avg_code_lines": 371,
+        "max_code_size_kb": 16.24,
+        "max_code_lines": 460,
+        "min_code_size_kb": 7.76,
+        "min_code_lines": 214
+      }
+    },
+    "5": {
+      "timestamp": "2025-03-23T07:51:35.256056",
+      "models": {
+        "o3_mini": {
+          "response_size_kb": 16.95,
+          "response_lines": 474,
+          "code_size_kb": 16.09,
+          "code_lines": 429,
+          "timestamp": "2025-03-23T07:51:35.240737",
+          "function_count": 14,
+          "class_count": 1,
+          "import_count": 10,
+          "decision_points": 88,
+          "complexity_estimate": 6.285714285714286
+        },
+        "gpt4o": {
+          "response_size_kb": 12.29,
+          "response_lines": 361,
+          "code_size_kb": 12.98,
+          "code_lines": 364,
+          "timestamp": "2025-03-23T07:51:35.246566",
+          "function_count": 14,
+          "class_count": 1,
+          "import_count": 10,
+          "decision_points": 71,
+          "complexity_estimate": 5.071428571428571
+        },
+        "claude37": {
+          "response_size_kb": 14.43,
+          "response_lines": 456,
+          "code_size_kb": 17.12,
+          "code_lines": 484,
+          "timestamp": "2025-03-23T07:51:35.250245",
+          "function_count": 14,
+          "class_count": 1,
+          "import_count": 10,
+          "decision_points": 105,
+          "complexity_estimate": 7.5
+        },
+        "mistral_large": {
+          "response_size_kb": 14.39,
+          "response_lines": 425,
+          "code_size_kb": 16.58,
+          "code_lines": 472,
+          "timestamp": "2025-03-23T07:51:35.253314",
+          "function_count": 14,
+          "class_count": 1,
+          "import_count": 12,
+          "decision_points": 102,
+          "complexity_estimate": 7.285714285714286
+        }
+      },
+      "aggregate": {
+        "avg_code_size_kb": 15.69,
+        "avg_code_lines": 437.25,
+        "max_code_size_kb": 17.12,
+        "max_code_lines": 484,
+        "min_code_size_kb": 12.98,
+        "min_code_lines": 364
+      }
+    }
+  },
+  "end_time": "2025-03-23T07:51:35.256680"
+}
