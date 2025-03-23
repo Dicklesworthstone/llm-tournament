@@ -14,10 +14,6 @@ Features:
 - Tracks and reports detailed metrics about each solution
 - Supports configurable tournament parameters (rounds, models, etc.)
 - Handles error recovery and rate limiting
-
-External dependencies:
-
-Just `pip install aisuite`
 """
 
 import os
@@ -29,14 +25,17 @@ import argparse
 import traceback
 import statistics
 import subprocess
+import textwrap
 import threading
 from typing import List, Dict, Tuple, Any, Optional, Union, Set
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
+from dotenv import load_dotenv
 import aisuite as ai
+
+load_dotenv()  # This will load variables from your .env file
 
 # Configure logging
 logging.basicConfig(
@@ -51,29 +50,25 @@ logger = logging.getLogger("llm_tournament")
 
 # Model configurations with appropriate parameters
 MODELS = {
+    "o3_mini": {
+        "id": "openai:o3-mini",
+        "thinking": True,
+        "provider": "openai"
+    },
+    "gpt4o": {
+        "id": "openai:gpt-4o",
+        "thinking": False,
+        "provider": "openai"
+    },
     "claude37": {
-        "id": "anthropic:claude-3-7-sonnet-20240219",
-        "max_tokens": 100000,
+        "id": "anthropic:claude-3-7-sonnet-20250219",
         "thinking": True,
         "provider": "anthropic"
     },
-    "gemini": {
-        "id": "google:gemini-2.0-flash-thinking-exp-01-21",
-        "max_tokens": 8192,
+    "mistral_large": {
+        "id": "mistral:mistral-large-latest",
         "thinking": True,
-        "provider": "google"
-    },
-    "o1_pro": {
-        "id": "openai:o1-pro",
-        "max_tokens": 4096,
-        "thinking": False,
-        "provider": "openai"
-    },
-    "o3_mini": {
-        "id": "openai:o3-mini-high",
-        "max_tokens": 4096,
-        "thinking": False,
-        "provider": "openai"
+        "provider": "mistral"
     }
 }
 
@@ -97,44 +92,122 @@ class ModelResponse:
     metrics: Dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
     
-    def extract_code(self) -> str:
+    def extract_code(self, output_dir: Optional[Path] = None) -> str:
         """
-        Extract the code portion from the model's response.
-        Handles various code block formats and edge cases.
+        Extract code from the model's response using the AI suite to process and structure it.
+        If the code has already been extracted and saved to a file, load it from there instead.
         
+        Args:
+            output_dir: Base directory for tournament artifacts (optional)
+            
         Returns:
-            Extracted code as a string
+            Extracted and cleaned code as a string
         """
         if not self.response:
             return ""
-            
-        # Extract code blocks (handles both ```python and ``` formats)
-        code_blocks = re.findall(r'```(?:python|py)?\s*\n(.*?)```', self.response, re.DOTALL)
         
-        if code_blocks:
-            # Join all code blocks together with appropriate spacing
-            full_code = "\n\n".join(code_blocks)
+        # If code has already been extracted, return it
+        if self.code:
+            return self.code
             
-            # Remove any leading/trailing whitespace
-            full_code = full_code.strip()
+        # If output_dir is provided, check if the extracted code file exists
+        if output_dir:
+            extracted_code_dir = output_dir / "extracted_code"
+            extracted_code_dir.mkdir(exist_ok=True, parents=True)
+            
+            # Create filename from model name and round number
+            code_filename = f"extracted_code__round_{self.round_num}__{self.model_name}.py"
+            code_file_path = extracted_code_dir / code_filename
+            
+            # Check if the file already exists
+            if code_file_path.exists():
+                try:
+                    logger.info(f"Loading previously extracted code for {self.model_name} Round {self.round_num} from file")
+                    with open(code_file_path, "r", encoding="utf-8") as f:
+                        self.code = f.read()
+                    return self.code
+                except Exception as e:
+                    logger.warning(f"Error loading extracted code from file: {str(e)}. Re-extracting from response.")
+        
+        try:
+            # Create a prompt for the AI to extract and transform the code
+            prompt = f"""
+    Extract all code from the text below and format it as a complete, self-contained class 
+    with the name {self.model_name}Round{self.round_num}Solution.
+
+    The class should:
+    1. Include all necessary imports at the top
+    2. Have a static 'solve' method that takes 'input_text' as its parameter
+    3. Contain all functions from the original code
+    4. Ensure the solve method correctly calls the main function with the input_text parameter
+    5. Be properly indented and formatted for execution
+
+    Important: Provide ONLY the complete code WITHOUT ANY explanations, comments about the task,
+    or markdown formatting. Do not include any text before or after the code.
+
+    Here is the text to extract code from:
+
+    {self.response}
+    """
+            
+            # Call the AI service
+            client = ai.Client()
+            print(f"Submitting model response to Claude3.7 to extract the code from {self.model_name} Round {self.round_num} and turn it into a self-contained class...")
+            response = client.chat.completions.create(
+                model="anthropic:claude-3-7-sonnet-20250219",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=25000
+            )
+            
+            # Get the extracted code
+            extracted_code = response.choices[0].message.content
+            
+            # Remove any markdown formatting
+            extracted_code = re.sub(r'^```(?:\w+)?\n', '', extracted_code)
+            extracted_code = re.sub(r'\n```$', '', extracted_code)
             
             # Store the extracted code
-            self.code = full_code
-            return full_code
+            self.code = extracted_code.strip()
+            
+            # Save to file if output_dir is provided
+            if output_dir:
+                try:
+                    with open(code_file_path, "w", encoding="utf-8") as f:
+                        f.write(self.code)
+                    logger.info(f"Saved extracted code to {code_file_path}")
+                except Exception as e:
+                    logger.error(f"Error saving extracted code to file: {str(e)}")
+            
+            return self.code
+            
+        except Exception as e:
+            logger.error(f"Error using AI to extract code: {str(e)}")
+            logger.debug(traceback.format_exc())
+            
+            # Fallback to a minimal implementation
+            fallback_code = f"""
+    class {self.model_name}Round{self.round_num}Solution:
+        \"\"\"Solution from {self.model_name} at round {self.round_num}\"\"\"
         
-        # Try other formats like <code> tags or indented blocks
-        if "<code>" in self.response and "</code>" in self.response:
-            code_blocks = re.findall(r'<code>(.*?)</code>', self.response, re.DOTALL)
-            if code_blocks:
-                self.code = "\n\n".join(code_blocks).strip()
-                return self.code
+        @staticmethod
+        def solve(input_text):
+            \"\"\"Apply the solution to the input text\"\"\"
+            # Simple fallback implementation that returns the input
+            return input_text
+    """
+            self.code = fallback_code.strip()
+            
+            # Save the fallback code to file if output_dir is provided
+            if output_dir:
+                try:
+                    with open(code_file_path, "w", encoding="utf-8") as f:
+                        f.write(self.code)
+                    logger.info(f"Saved fallback code to {code_file_path}")
+                except Exception as e:
+                    logger.error(f"Error saving fallback code to file: {str(e)}")
+            
+            return self.code
         
-        # If all extraction methods fail, use the entire response as a fallback
-        # (this is not ideal but provides a graceful fallback)
-        logger.warning(f"Could not extract code blocks from {self.model_name}'s response (round {self.round_num})")
-        self.code = self.response
-        return self.response
-    
     def extract_thinking(self) -> Optional[str]:
         """
         Extract the thought process or reasoning from the model's response.
@@ -177,7 +250,7 @@ class ModelResponse:
         code_size = len(self.code) if self.code else 0
         code_lines = self.code.count('\n') + 1 if self.code else 0
         
-        # Compute code complexity metrics
+        # Compute code complexity metrics using the class-structured code
         complexity_metrics = self._compute_code_complexity()
         
         # Combine metrics
@@ -192,10 +265,11 @@ class ModelResponse:
         
         self.metrics = metrics
         return metrics
-    
+
     def _compute_code_complexity(self) -> Dict[str, Any]:
         """
         Compute code complexity metrics like function count, class count, etc.
+        from the class-structured code.
         
         Returns:
             Dictionary of complexity metrics
@@ -203,14 +277,16 @@ class ModelResponse:
         if not self.code:
             return {}
             
-        # Count functions
-        function_count = len(re.findall(r'\bdef\s+([a-zA-Z0-9_]+)\s*\(', self.code))
+        # Count functions - now looking for methods and static methods in class structure
+        function_count = len(re.findall(r'(?:^|\s)def\s+([a-zA-Z0-9_]+)\s*\(', self.code))
         
-        # Count classes
-        class_count = len(re.findall(r'\bclass\s+([a-zA-Z0-9_]+)', self.code))
+        # Count classes (should be at least 1 - the solution class)
+        class_count = len(re.findall(r'(?:^|\s)class\s+([a-zA-Z0-9_]+)', self.code))
         
         # Count import statements
-        import_count = len(re.findall(r'\bimport\s+([a-zA-Z0-9_., ]+)', self.code))
+        import_count = len(re.findall(r'(?:^|\s)import\s+([a-zA-Z0-9_., ]+)', self.code))
+        from_import_count = len(re.findall(r'(?:^|\s)from\s+([a-zA-Z0-9_.]+)\s+import', self.code))
+        total_imports = import_count + from_import_count
         
         # Estimate cyclomatic complexity by counting decision points
         decision_patterns = [
@@ -224,11 +300,11 @@ class ModelResponse:
         return {
             "function_count": function_count,
             "class_count": class_count,
-            "import_count": import_count,
+            "import_count": total_imports,
             "decision_points": decision_count,
             "complexity_estimate": decision_count / (function_count if function_count else 1)
         }
-    
+        
     def save_to_file(self, output_dir: Path) -> Path:
         """
         Save the response to a file.
@@ -326,12 +402,13 @@ class LLMTournament:
         
         Directory structure:
         - output_dir/
-          - round_0_responses/
-          - round_1_responses/
-          - ...
-          - round_N_responses/
-          - output_results_for_each_round_and_model/
-          - metrics/
+        - round_0_responses/
+        - round_1_responses/
+        - ...
+        - round_N_responses/
+        - output_results_for_each_round_and_model/
+        - extracted_code/  # New directory for extracted code
+        - metrics/
         """
         # Create main output directory
         self.output_dir.mkdir(exist_ok=True, parents=True)
@@ -344,6 +421,10 @@ class LLMTournament:
         # Create output results directory
         results_dir = self.output_dir / "output_results_for_each_round_and_model"
         results_dir.mkdir(exist_ok=True)
+        
+        # Create extracted code directory (new)
+        extracted_code_dir = self.output_dir / "extracted_code"
+        extracted_code_dir.mkdir(exist_ok=True)
         
         # Create metrics directory
         metrics_dir = self.output_dir / "metrics"
@@ -368,10 +449,49 @@ class LLMTournament:
         Returns:
             ModelResponse object containing the model's response and metadata
         """
+        # Check if we already have a valid response file for this model and round
+        response_dir = self.output_dir / f"round_{round_num}_responses"
+        response_filename = f"tournament_response__round_{round_num}__{model_name}.md"
+        response_file_path = response_dir / response_filename
+        
+        if response_file_path.exists():
+            logger.info(f"Found existing response file for {model_name} (round {round_num}). Loading...")
+            try:
+                # Read the existing response
+                with open(response_file_path, "r", encoding="utf-8") as f:
+                    response_text = f.read()
+                
+                # Create a ModelResponse object
+                response_obj = ModelResponse(
+                    model_name=model_name,
+                    round_num=round_num,
+                    prompt=prompt_text,
+                    response=response_text,
+                    file_path=response_file_path
+                )
+                
+                # Extract code (will use cached file if available) and thinking components
+                response_obj.extract_code(self.output_dir)
+                response_obj.extract_thinking()
+                
+                # Calculate metrics
+                response_obj.calculate_metrics()
+                
+                # Log success
+                logger.info(f"Successfully loaded existing response for {model_name} (round {round_num})")
+                
+                # Store in the responses dictionary
+                self.responses[round_num][model_name] = response_obj
+                
+                return response_obj
+            except Exception as e:
+                logger.warning(f"Error loading existing response for {model_name} (round {round_num}): {str(e)}. Requesting a new one.")
+        
         model_config = self.models[model_name]
         model_id = model_config["id"]
         thinking_enabled = model_config.get("thinking", False)
         max_tokens = model_config.get("max_tokens", 4096)
+        provider = model_config.get("provider", "")
         
         # Create system message based on model capabilities
         system_message = "You are an expert programmer specializing in writing clean, efficient, and robust code."
@@ -397,16 +517,32 @@ class LLMTournament:
             try:
                 start_time = time.time()
                 
-                # Make the API call
-                api_response = self.client.chat.completions.create(
-                    model=model_id,
-                    messages=[
+                # Prepare API parameters based on provider and model
+                api_params = {
+                    "model": model_id,
+                    "messages": [
                         {"role": "system", "content": system_message},
                         {"role": "user", "content": prompt_text}
-                    ],
-                    temperature=self.temperature,
-                    max_tokens=max_tokens
-                )
+                    ]
+                }
+                
+                # Handle provider-specific parameters
+                if provider.lower() == "openai":
+                    # Check if this is o3-mini model which has parameter limitations
+                    if "o3-mini" in model_id.lower():
+                        # For o3-mini models, don't add temperature or max_tokens parameters
+                        pass
+                    else:
+                        # For other OpenAI models, use these parameters
+                        api_params["max_completion_tokens"] = max_tokens
+                        api_params["temperature"] = self.temperature
+                else:
+                    # Other providers use standard parameters
+                    api_params["max_tokens"] = max_tokens
+                    api_params["temperature"] = self.temperature
+                
+                # Make the API call
+                api_response = self.client.chat.completions.create(**api_params)
                 
                 # Calculate response time
                 response_time = time.time() - start_time
@@ -416,8 +552,8 @@ class LLMTournament:
                 response_obj.response = response_text
                 response_obj.metrics["response_time"] = round(response_time, 2)
                 
-                # Extract code and thinking components
-                response_obj.extract_code()
+                # Extract code (and save to file) and thinking components
+                response_obj.extract_code(self.output_dir)
                 response_obj.extract_thinking()
                 
                 # Calculate metrics
@@ -437,6 +573,18 @@ class LLMTournament:
                 error_msg = f"Error querying {model_name} (attempt {attempt+1}/{MAX_RETRIES}): {str(e)}"
                 logger.error(error_msg)
                 logger.debug(traceback.format_exc())
+                
+                # If we're seeing an unsupported parameter error, try to adapt
+                if "Unsupported parameter" in str(e):
+                    error_details = str(e)
+                    logger.info(f"Detected unsupported parameter error. Adapting request for next attempt.")
+                    
+                    # Extract unsupported parameter name if possible
+                    param_match = re.search(r"'([^']+)' is not supported", error_details)
+                    if param_match and param_match.group(1) in api_params:
+                        unsupported_param = param_match.group(1)
+                        logger.info(f"Removing unsupported parameter: {unsupported_param}")
+                        api_params.pop(unsupported_param, None)
                 
                 # Store error information
                 response_obj.error = error_msg
@@ -506,18 +654,95 @@ Your implementation should be complete and ready to use without modification.
         
         return combined_prompt
 
+    def _all_responses_exist(self, round_num: int) -> bool:
+        """
+        Check if all response files for a specific round already exist.
+        """
+        response_dir = self.output_dir / f"round_{round_num}_responses"
+        
+        for model_name in self.models.keys():
+            response_filename = f"tournament_response__round_{round_num}__{model_name}.md"
+            response_file_path = response_dir / response_filename
+            
+            if not response_file_path.exists():
+                return False
+        
+        return True
+
+    def _load_existing_responses(self, round_num: int) -> Dict[str, ModelResponse]:
+        """
+        Load existing response files for a specific round.
+        """
+        round_responses = {}
+        response_dir = self.output_dir / f"round_{round_num}_responses"
+        
+        # Try to load the prompt for this round
+        prompt_text = ""
+        prompt_file = self.output_dir / f"prompt_round_{round_num}.md"
+        if prompt_file.exists():
+            try:
+                with open(prompt_file, "r", encoding="utf-8") as f:
+                    prompt_text = f.read()
+            except Exception as e:
+                logger.warning(f"Error loading prompt for round {round_num}: {str(e)}")
+        
+        for model_name in self.models.keys():
+            response_filename = f"tournament_response__round_{round_num}__{model_name}.md"
+            response_file_path = response_dir / response_filename
+            
+            if response_file_path.exists():
+                try:
+                    # Read the existing response
+                    with open(response_file_path, "r", encoding="utf-8") as f:
+                        response_text = f.read()
+                    
+                    # Create a ModelResponse object
+                    response_obj = ModelResponse(
+                        model_name=model_name,
+                        round_num=round_num,
+                        prompt=prompt_text,
+                        response=response_text,
+                        file_path=response_file_path
+                    )
+                    
+                    # Extract code (will use cached file if available) and thinking components
+                    response_obj.extract_code(self.output_dir)
+                    response_obj.extract_thinking()
+                    
+                    # Calculate metrics
+                    response_obj.calculate_metrics()
+                    
+                    # Store in responses dictionaries
+                    round_responses[model_name] = response_obj
+                    self.responses[round_num][model_name] = response_obj
+                    
+                    logger.info(f"Loaded existing response for {model_name} (round {round_num})")
+                except Exception as e:
+                    logger.error(f"Error loading existing response for {model_name} (round {round_num}): {str(e)}")
+        
+        # Create comparison file and update metrics
+        self.create_round_comparison_file(round_num)
+        self.update_metrics(round_num, round_responses)
+        
+        return round_responses
+
     def run_round(self, round_num: int) -> Dict[str, ModelResponse]:
         """
         Run a single round of the tournament, querying all models in parallel.
-        
-        Args:
-            round_num: The round number to run
-            
-        Returns:
-            Dictionary mapping model names to their responses
         """
         logger.info(f"Starting Round {round_num}")
         
+        # Check if all response files for this round already exist
+        if self._all_responses_exist(round_num):
+            logger.info(f"All responses for round {round_num} already exist. Loading...")
+            return self._load_existing_responses(round_num)
+        
+        # Check if the next round is already complete, which means we can skip prompt creation
+        # for this round and just load whatever responses exist
+        if round_num < self.rounds and self._all_responses_exist(round_num + 1):
+            logger.info(f"Next round {round_num + 1} is already complete. Loading existing responses for round {round_num}...")
+            return self._load_existing_responses(round_num)
+
         # Create the prompt for this round
         round_prompt = self.create_round_prompt(round_num)
         
@@ -745,7 +970,7 @@ Your implementation should be complete and ready to use without modification.
         Returns:
             Tuple containing paths to the test script and test runner
         """
-        # Extract all solution code
+        # Collect all solution classes
         solution_classes = []
         
         for round_num in range(self.rounds + 1):
@@ -757,43 +982,9 @@ Your implementation should be complete and ready to use without modification.
                 clean_model_name = re.sub(r'[^a-zA-Z0-9]', '_', model_name)
                 class_name = f"{clean_model_name.title()}Round{round_num}Solution"
                 
-                # Create a class definition
-                class_code = f"""
-class {class_name}:
-    \"\"\"Solution from {model_name} at round {round_num}\"\"\"
-    
-    @staticmethod
-    def solve(input_text):
-        \"\"\"Apply the solution to the input text\"\"\"
-        # Define any necessary helper functions or imports
-        import re
-        
-        # Original code from {model_name} (round {round_num})
-{response.code.replace('import ', '        import ').replace('\ndef ', '\n        def ').replace('\nclass ', '\n        class ').replace('\n', '\n        ')}
-        
-        # Try to find and call the main function
-        # This is a heuristic approach - may need adjustment for specific challenges
-        possible_functions = [
-            'fix_invalid_markdown_tables',
-            'fix_markdown_tables',
-            'process_markdown',
-            'repair_markdown_tables',
-            'solve'
-        ]
-        
-        for func_name in possible_functions:
-            if func_name in locals():
-                try:
-                    func = locals()[func_name]
-                    if callable(func):
-                        return func(input_text)
-                except Exception as e:
-                    return f"Error executing {func_name}: {str(e)}"
-        
-        # If no suitable function found, log an error
-        return f"Error: Could not find a suitable function to call in {class_name}"
-"""
-                solution_classes.append(class_code)
+                # With the new LLM-powered extract_code, we should already have a properly formatted class
+                # Just add the class directly to our solution_classes list
+                solution_classes.append(response.code)
         
         # Create the test script
         test_script = f"""#!/usr/bin/env python3
@@ -807,150 +998,151 @@ and collects metrics on the results.
 import os
 import time
 import json
+import inspect
 import argparse
 from pathlib import Path
 from typing import Dict, List, Tuple, Any
 
-{os.linesep.join(solution_classes)}
+    {os.linesep.join(solution_classes)}
 
-def count_lines(text: str) -> int:
-    \"\"\"Count the number of lines in a text\"\"\"
-    return len(text.splitlines())
-
-def count_chars(text: str) -> int:
-    \"\"\"Count the number of characters in a text\"\"\"
-    return len(text)
-
-def main():
-    \"\"\"Test all solutions and collect metrics\"\"\"
-    parser = argparse.ArgumentParser(description="Test LLM tournament solutions")
-    parser.add_argument("--input", type=str, required=True, help="Input file to test on")
-    parser.add_argument("--output-dir", type=str, default="output_results_for_each_round_and_model",
-                      help="Directory for results")
-    args = parser.parse_args()
-    
-    # Create output directory
-    output_dir = Path(args.output_dir)
-    output_dir.mkdir(exist_ok=True, parents=True)
-    
-    # Read the input file
-    with open(args.input, "r", encoding="utf-8") as f:
-        input_text = f.read()
-    
-    # Get input file metrics
-    input_lines = count_lines(input_text)
-    input_chars = count_chars(input_text)
-    print(f"Input file: {args.input}")
-    print(f"Input lines: {input_lines}")
-    print(f"Input chars: {input_chars}")
-    
-    # List of all solution classes
-    solution_classes = [
-        {", ".join([s.split()[1].split(":")[0] for s in solution_classes])}
-    ]
-    
-    # Test each solution
-    metrics = []
-    
-    for solution_class in solution_classes:
-        class_name = solution_class.__name__
-        print(f"\\nTesting {class_name}...")
+    def main():
+        \"\"\"Test all solutions and collect metrics\"\"\"
+        parser = argparse.ArgumentParser(description="Test LLM tournament solutions")
+        parser.add_argument("--input", type=str, required=True, help="Input file to test on")
+        parser.add_argument("--output-dir", type=str, default="output_results_for_each_round_and_model",
+                        help="Directory for results")
+        args = parser.parse_args()
         
-        # Extract model name and round number
-        parts = class_name.split("Round")
-        model_name = parts[0].replace("_", "-").lower()
-        round_num = parts[1].split("Solution")[0]
+        # Create output directory
+        output_dir = Path(args.output_dir)
+        output_dir.mkdir(exist_ok=True, parents=True)
         
-        try:
-            # Apply the solution
-            start_time = time.time()
-            result = solution_class.solve(input_text)
-            execution_time = time.time() - start_time
+        # Read the input file
+        with open(args.input, "r", encoding="utf-8") as f:
+            input_text = f.read()
+        
+        def count_lines(text: str) -> int:
+            \"\"\"Count the number of lines in a text\"\"\"
+            return len(text.splitlines())
+
+        def count_chars(text: str) -> int:
+            \"\"\"Count the number of characters in a text\"\"\"
+            return len(text)        
+        
+        # Get input file metrics
+        input_lines = count_lines(input_text)
+        input_chars = count_chars(input_text)
+        print(f"Input file: {{args.input}}")
+        print(f"Input lines: {{input_lines}}")
+        print(f"Input chars: {{input_chars}}")
+        
+        # List of all solution classes
+        solution_classes = [
+            {", ".join([s.split("class ")[1].split("(")[0].split(":")[0].strip() for s in solution_classes if "class " in s])}
+        ]
+        
+        # Test each solution
+        metrics = []
+        
+        for solution_class in solution_classes:
+            class_name = solution_class.__name__
+            print(f"\\nTesting {{class_name}}...")
+
+            # Extract model name and round number
+            parts = class_name.split("Round")
+            model_name = parts[0].replace("_", "-").lower()
+            round_num = parts[1].split("Solution")[0]
             
-            # Save the result
-            output_filename = f"sample_10k_reformatted__fixed_tables__{model_name}_round_{round_num}.md"
-            output_path = output_dir / output_filename
-            
-            with open(output_path, "w", encoding="utf-8") as f:
-                f.write(result)
+            try:
+                # Apply the solution
+                start_time = time.time()
+                result = solution_class.solve(input_text)
+                execution_time = time.time() - start_time
                 
-            # Calculate metrics
-            output_lines = count_lines(result)
-            output_chars = count_chars(result)
-            output_size_kb = len(result) / 1024
-            
-            # Store metrics
-            solution_metrics = {
-                "model": model_name,
-                "round": round_num,
-                "execution_time": round(execution_time, 2),
-                "output_lines": output_lines,
-                "output_chars": output_chars,
-                "output_size_kb": round(output_size_kb, 2),
-                "lines_ratio": round(output_lines / input_lines, 2),
-                "chars_ratio": round(output_chars / input_chars, 2)
-            }
-            
-            metrics.append(solution_metrics)
-            
-            # Print metrics
-            print(f"  Execution time: {solution_metrics['execution_time']}s")
-            print(f"  Output lines: {output_lines}")
-            print(f"  Output size: {solution_metrics['output_size_kb']} KB")
-            print(f"  Output saved to: {output_path}")
-            
-        except Exception as e:
-            print(f"  Error testing {class_name}: {str(e)}")
-    
-    # Save metrics
-    metrics_path = output_dir.parent / "metrics" / "test_metrics.json"
-    os.makedirs(os.path.dirname(metrics_path), exist_ok=True)
-    
-    with open(metrics_path, "w", encoding="utf-8") as f:
-        json.dump(metrics, f, indent=2)
+                # Save the result
+                output_filename = f"sample_file_output__{{model_name}}_round_{{round_num}}.md"
+                output_path = output_dir / output_filename
+                
+                with open(output_path, "w", encoding="utf-8") as f:
+                    f.write(result)
+                    
+                # Calculate metrics
+                output_lines = count_lines(result)
+                output_chars = count_chars(result)
+                output_size_kb = len(result) / 1024
+                
+                # Store metrics
+                solution_metrics = {{
+                    "model": model_name,
+                    "round": round_num,
+                    "execution_time": round(execution_time, 2),
+                    "output_lines": output_lines,
+                    "output_chars": output_chars,
+                    "output_size_kb": round(output_size_kb, 2),
+                    "lines_ratio": round(output_lines / input_lines, 2),
+                    "chars_ratio": round(output_chars / input_chars, 2)
+                }}
+                
+                metrics.append(solution_metrics)
+                
+                # Print metrics
+                print(f"  Execution time: {{solution_metrics['execution_time']}}s")
+                print(f"  Output lines: {{output_lines}}")
+                print(f"  Output size: {{solution_metrics['output_size_kb']}} KB")
+                print(f"  Output saved to: {{output_path}}")
+                
+            except Exception as e:
+                print(f"  Error testing {{class_name}}: {{str(e)}}")
+
+        # Save metrics
+        metrics_path = output_dir.parent / "metrics" / "test_metrics.json"
+        os.makedirs(os.path.dirname(metrics_path), exist_ok=True)
         
-    print(f"\\nMetrics saved to: {metrics_path}")
-    
-if __name__ == "__main__":
-    main()
-"""
+        with open(metrics_path, "w", encoding="utf-8") as f:
+            json.dump(metrics, f, indent=2)
+            
+        print(f"\\nMetrics saved to: {{metrics_path}}")
         
-        # Create a test runner script
+    if __name__ == "__main__":
+        main()
+    """
+        
+        # Create a test runner script (unchanged)
         test_runner = f"""#!/usr/bin/env python3
-\"\"\"
-LLM Tournament Test Runner
+    \"\"\"
+    LLM Tournament Test Runner
 
-This script runs the test suite on the provided test file.
-\"\"\"
+    This script runs the test suite on the provided test file.
+    \"\"\"
 
-import os
-import subprocess
-import argparse
-from pathlib import Path
+    import os
+    import subprocess
+    import argparse
+    from pathlib import Path
 
-def main():
-    \"\"\"Run the test suite\"\"\"
-    parser = argparse.ArgumentParser(description="Run LLM tournament tests")
-    parser.add_argument("--test-file", type=str, required=True, help="File to test on")
-    args = parser.parse_args()
-    
-    # Path to the test script
-    test_script = Path(__file__).parent / "test_all_solutions.py"
-    
-    # Run the test script
-    cmd = [
-        "python",
-        str(test_script),
-        "--input", args.test_file,
-        "--output-dir", "output_results_for_each_round_and_model"
-    ]
-    
-    print(f"Running: {' '.join(cmd)}")
-    subprocess.run(cmd, check=True)
-    
-if __name__ == "__main__":
-    main()
-"""
+    def main():
+        \"\"\"Run the test suite\"\"\"
+        parser = argparse.ArgumentParser(description="Run LLM tournament tests")
+        parser.add_argument("--test-file", type=str, required=True, help="File to test on")
+        args = parser.parse_args()
+        
+        # Path to the test script
+        test_script = Path(__file__).parent / "test_all_solutions.py"
+        
+        # Run the test script
+        cmd = [
+            "python",
+            str(test_script),
+            "--input", args.test_file,
+            "--output-dir", "output_results_for_each_round_and_model"
+        ]
+        
+        print(f"Running: {{' '.join(cmd)}}")
+        subprocess.run(cmd, check=True)
+        
+    if __name__ == "__main__":
+        main()
+    """
         
         # Save the test script
         test_script_path = self.output_dir / "test_all_solutions.py"
@@ -1023,22 +1215,22 @@ def load_metrics(metrics_dir: str) -> Dict[str, Any]:
         "tournament": tournament_metrics,
         "test": test_metrics
     }
-
+    
 def generate_markdown_report(metrics: Dict[str, Any], output_file: str) -> None:
     \"\"\"Generate a markdown report from the metrics\"\"\"
     tournament_metrics = metrics.get("tournament", {})
     test_metrics = metrics.get("test", [])
     
     # Start building the report
-    report = "# LLM Tournament Results\n\n"
-    report += "## Overview\n\n"
-    report += "This report summarizes the results of the LLM tournament.\n\n"
+    report = "# LLM Tournament Results\\n\\n"
+    report += "## Overview\\n\\n"
+    report += "This report summarizes the results of the LLM tournament.\\n\\n"
     
     # Add test metrics table if available
     if test_metrics:
-        report += "## Test Results\n\n"
-        report += "| Model | Round | Execution Time (s) | Output Lines | Output Size (KB) |\n"
-        report += "|-------|-------|-------------------|--------------|------------------|\n"
+        report += "## Test Results\\n\\n"
+        report += "| Model | Round | Execution Time (s) | Output Lines | Output Size (KB) |\\n"
+        report += "|-------|-------|-------------------|--------------|------------------|\\n"
         
         # Sort by round, then model
         sorted_metrics = sorted(test_metrics, key=lambda x: (int(x.get("round", 0)), x.get("model", "")))
@@ -1050,14 +1242,14 @@ def generate_markdown_report(metrics: Dict[str, Any], output_file: str) -> None:
             lines = metric.get("output_lines", "N/A")
             size = metric.get("output_size_kb", "N/A")
             
-            report += f"| {model} | {round_num} | {time} | {lines} | {size} |\n"
-    
+            report += f"| {model} | {round_num} | {time} | {lines} | {size} |\\n"
+            
     # Add round metrics if available
     rounds_data = tournament_metrics.get("rounds", {})
     if rounds_data:
-        report += "\n## Code Metrics by Round\n\n"
-        report += "| Round | Model | Code Size (KB) | Code Lines |\n"
-        report += "|-------|-------|---------------|------------|\n"
+        report += "\\n## Code Metrics by Round\\n\\n"
+        report += "| Round | Model | Code Size (KB) | Code Lines |\\n"
+        report += "|-------|-------|---------------|------------|\\n"
         
         for round_num, round_data in sorted(rounds_data.items(), key=lambda x: int(x[0])):
             models_data = round_data.get("models", {})
@@ -1066,7 +1258,7 @@ def generate_markdown_report(metrics: Dict[str, Any], output_file: str) -> None:
                 code_size = model_data.get("code_size_kb", "N/A")
                 code_lines = model_data.get("code_lines", "N/A")
                 
-                report += f"| {round_num} | {model} | {code_size} | {code_lines} |\n"
+                report += f"| {round_num} | {model} | {code_size} | {code_lines} |\\n"
     
     # Save the report
     with open(output_file, "w", encoding="utf-8") as f:
@@ -1163,7 +1355,7 @@ def create_visualizations(metrics: Dict[str, Any], output_dir: str) -> None:
         # Save the plot
         plt.savefig(output_dir / "execution_time_by_round.png")
     
-    print(f"Visualizations saved to: {output_dir}")
+    print(f"Visualizations saved to: {{output_dir}}")
 
 def main():
     \"\"\"Main function\"\"\"
@@ -1221,13 +1413,12 @@ if __name__ == "__main__":
         
         # Run subsequent rounds
         for round_num in range(1, self.rounds + 1):
-            logger.info(f"Starting round {round_num}")
             self.run_round(round_num)
             
             # Give a short break between rounds to avoid rate limiting
             if round_num < self.rounds:
                 logger.info(f"Completed round {round_num}. Waiting before starting next round...")
-                time.sleep(10)
+                time.sleep(3)
         
         # Record end time
         self.metrics["end_time"] = datetime.now().isoformat()
@@ -1365,7 +1556,7 @@ def main():
     parser.add_argument(
         "--concurrent-requests", 
         type=int, 
-        default=2,
+        default=4,
         help="Maximum number of concurrent API requests"
     )
     parser.add_argument(
@@ -1401,12 +1592,13 @@ def main():
     
     # Display startup banner
     print(r"""
- _     _     __  __   _____                                                  _   
-| |   | |   |  \/  | |_   _|                                                | |  
-| |   | |   | \  / |   | |     ___    _   _   _ __   _ __     __ _   _ __   | |_ 
-| |   | |   | |\/| |   | |    / _ \  | | | | | '__| | '_ \   / _` | | '_ \  | __|
-| |___| |___| |  | |   | |   | (_) | | |_| | | |    | | | | | (_| | | | | | | |_ 
-|_____|_____|_|  |_|   |_|    \___/   \__,_| |_|    |_| |_|  \__,_| |_| |_|  \__|
+
+   __    __              _____                                                  _   
+  / /   / /   /\/\      /__   \___  _   _ _ __ _ __   __ _ _ __ ___   ___ _ __ | |_ 
+ / /   / /   /    \ _____ / /\/ _ \| | | | '__| '_ \ / _` | '_ ` _ \ / _ \ '_ \| __|
+/ /___/ /___/ /\/\ \_____/ / | (_) | |_| | |  | | | | (_| | | | | | |  __/ | | | |_ 
+\____/\____/\/    \/     \/   \___/ \__,_|_|  |_| |_|\__,_|_| |_| |_|\___|_| |_|\__|
+                                                                                    
                                                                                  
 """)
     print(f"Starting LLM Tournament with {len(MODELS)} models for {args.rounds} rounds")

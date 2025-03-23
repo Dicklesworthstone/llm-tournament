@@ -1,0 +1,5 @@
+aisuite[all]
+pydantic
+docstring_parser
+dotenv
+mistralai

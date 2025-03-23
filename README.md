@@ -4,8 +4,7 @@ This project implements an automated tournament where multiple LLMs collaborate 
 
 ## Prerequisites
 
-- Python 3.8+
-- API keys for the LLM providers (Anthropic, OpenAI, Google)
+- API keys for the LLM providers (Anthropic, OpenAI, Mistral)
 
 ## Installation
 
@@ -16,10 +15,14 @@ This project implements an automated tournament where multiple LLMs collaborate 
    cd llm-tournament
    ```
 
-2. Install dependencies:
+2. Install dependencies (using `uv` for virtual environment management):
 
    ```bash
-   pip install aisuite
+
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   uv venv --python 3.13                                                                                                                                                                                                                   ✔  base   at 04:42:14 AM 
+   source .venv/bin/activate
+   uv pip install -r requirements.txt
    ```
 
 3. Set up API keys as environment variables:
@@ -27,7 +30,7 @@ This project implements an automated tournament where multiple LLMs collaborate 
    ```bash
    export ANTHROPIC_API_KEY="your_anthropic_key"
    export OPENAI_API_KEY="your_openai_key"
-   export GOOGLE_API_KEY="your_google_key"
+   export MISTRAL_API_KEY="your_mistral_key"
    ```
 
 ## File Structure
@@ -47,10 +50,12 @@ Run a tournament with default settings:
 python llm_tournament.py --prompt challenge_prompt.md --test-file messy_csv_sample.csv
 ```
 
+Note that, if you already have a response saved in the `tournament_results` directory, the script will skip that round and use the saved response instead (assuming there is a valid code block found within the response).
+
 ### Advanced Options
 
 ```bash
-python llm_tournament.py --prompt challenge_prompt.md --test-file messy_csv_sample.csv --rounds 3 --temperature 0.8 --concurrent-requests 2 --verbose
+python llm_tournament.py --prompt challenge_prompt.md --test-file messy_csv_sample.csv --rounds 3 --temperature 0.8 --concurrent-requests 4 --verbose
 ```
 
 ### Options
@@ -60,7 +65,7 @@ python llm_tournament.py --prompt challenge_prompt.md --test-file messy_csv_samp
 - `--output-dir`: Directory for tournament results (default: "tournament_results")
 - `--test-file`: File to use for testing solutions
 - `--temperature`: Temperature for LLM generation (default: 0.7)
-- `--concurrent-requests`: Maximum number of concurrent API requests (default: 2)
+- `--concurrent-requests`: Maximum number of concurrent API requests (default: 4)
 - `--skip-tests`: Skip running tests on the solutions
 - `--verbose`: Enable verbose logging
 

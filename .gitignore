@@ -172,3 +172,6 @@ venv/
 .env
 emoji_cache.json
 .env
+tournament_results
+output_results_for_each_round_and_model
+metrics/test_metrics.json
