@@ -2,7 +2,7 @@
 
 This project implements a groundbreaking automated coding tournament where multiple advanced Large Language Models (LLMs) collaboratively compete and iteratively refine their solutions to complex coding challenges across multiple rounds. It's designed to harness collective intelligence, pushing LLM-generated code toward unprecedented quality and efficiency through continual peer feedback and integration.
 
-![LLM Tournament](https://github.com/Dicklesworthstone/llm-tournament/blob/main/llm_tournament.webp)
+![LLM Tournament](https://raw.githubusercontent.com/Dicklesworthstone/llm-tournament/refs/heads/main/llm-tournament.webp)
 
 ## Project Overview
 
