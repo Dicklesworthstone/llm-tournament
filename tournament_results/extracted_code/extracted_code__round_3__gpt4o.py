@@ -4,7 +4,7 @@ import io
 import chardet
 from dateutil import parser as date_parser
 from collections import Counter
-from typing import List, Optional, Dict
+from typing import List, Optional
 
 class gpt4oRound3Solution:
     @staticmethod

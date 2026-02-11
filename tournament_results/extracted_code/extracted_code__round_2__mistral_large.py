@@ -4,8 +4,7 @@ import io
 import chardet
 from dateutil import parser
 from collections import Counter
-from typing import List, Tuple, Optional, Dict, Any
-from datetime import datetime
+from typing import List, Optional, Dict
 
 class mistral_largeRound2Solution:
     @staticmethod
@@ -237,7 +236,7 @@ class mistral_largeRound2Solution:
                 clean_rows.append(clean_row)
 
             return clean_rows
-        except Exception as e:
+        except Exception:
             # Fallback: manual parsing
             rows = []
             for line in lines:

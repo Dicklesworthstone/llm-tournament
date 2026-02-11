@@ -9,10 +9,9 @@ and collects metrics on the results.
 import os
 import time
 import json
-import inspect
 import argparse
 from pathlib import Path
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Any
 
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
@@ -173,9 +172,6 @@ class o3_miniRound0Solution:
         
         # Otherwise, return the cleaned string.
         return v
-import csv
-import re
-import io
 from dateutil import parser as date_parser
 import locale
 
@@ -254,14 +250,9 @@ class gpt4oRound0Solution:
         csv_writer.writerows(normalized_data)
         
         return output.getvalue()
-import csv
-import re
-import io
 import chardet
 import dateutil.parser
 from datetime import datetime
-import unicodedata
-import locale
 
 class claude37Round0Solution:
     @staticmethod
@@ -571,8 +562,6 @@ class claude37Round0Solution:
                 return str(round(num, 6)).rstrip('0').rstrip('.') if '.' in str(round(num, 6)) else str(round(num, 6))
         except ValueError:
             return number_str  # Return original if parsing fails
-import csv
-import re
 from io import StringIO
 from dateutil import parser
 from collections import Counter
@@ -660,12 +649,6 @@ class mistral_largeRound0Solution:
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import csv
-import re
-import io
-from collections import Counter
-from dateutil import parser as date_parser
-import chardet
 
 class o3_miniRound1Solution:
     @staticmethod
@@ -931,11 +914,6 @@ class o3_miniRound1Solution:
             return str(num)
         except Exception:
             return None
-import csv
-import re
-import io
-from dateutil import parser as date_parser
-from collections import Counter
 
 class gpt4oRound1Solution:
     @staticmethod
@@ -1086,13 +1064,7 @@ class gpt4oRound1Solution:
             return f"{num:.2f}".rstrip('0').rstrip('.') if '.' in str(num) else str(int(num))
         except ValueError:
             return number_str
-import csv
-import re
-import io
-import chardet
-from dateutil import parser
-from collections import Counter
-from typing import List, Tuple, Optional, Dict, Any
+from typing import Optional
 
 class claude37Round1Solution:
     @staticmethod
@@ -1324,7 +1296,7 @@ class claude37Round1Solution:
                 clean_rows.append(clean_row)
             
             return clean_rows
-        except Exception as e:
+        except Exception:
             # Fallback: manual parsing
             rows = []
             for line in lines:
@@ -1586,12 +1558,6 @@ class claude37Round1Solution:
                 return formatted
         except ValueError:
             return field
-import csv
-import re
-import io
-import chardet
-from dateutil import parser
-from collections import Counter
 
 class mistral_largeRound1Solution:
     @staticmethod
@@ -1687,12 +1653,6 @@ class mistral_largeRound1Solution:
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import csv
-import re
-import io
-import chardet
-from collections import Counter
-from dateutil import parser as date_parser
 
 class o3_miniRound2Solution:
     @staticmethod
@@ -1936,12 +1896,6 @@ class o3_miniRound2Solution:
             return str(num)
         except Exception:
             return None
-import csv
-import re
-import io
-import chardet
-from dateutil import parser as date_parser
-from collections import Counter
 from typing import List, Optional
 
 class gpt4oRound2Solution:
@@ -2143,13 +2097,8 @@ class gpt4oRound2Solution:
             return f"{num:.2f}".rstrip('0').rstrip('.') if '.' in str(num) else str(int(num))
         except ValueError:
             return number_str
-import csv
-import re
-import io
-import chardet
 from dateutil import parser as date_parser
-from collections import Counter
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Any
 
 class claude37Round2Solution:
     @staticmethod
@@ -2596,14 +2545,7 @@ class claude37Round2Solution:
                 return str(num)
         except ValueError:
             return number_str  # Return original if conversion fails
-import csv
-import re
-import io
-import chardet
-from dateutil import parser
-from collections import Counter
-from typing import List, Tuple, Optional, Dict, Any
-from datetime import datetime
+from typing import List, Optional, Any
 
 class mistral_largeRound2Solution:
     @staticmethod
@@ -2835,7 +2777,7 @@ class mistral_largeRound2Solution:
                 clean_rows.append(clean_row)
 
             return clean_rows
-        except Exception as e:
+        except Exception:
             # Fallback: manual parsing
             rows = []
             for line in lines:
@@ -3055,13 +2997,8 @@ class mistral_largeRound2Solution:
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import csv
-import re
-import io
-import chardet
 from dateutil import parser as date_parser
-from collections import Counter
-from typing import List, Optional, Dict
+from typing import List, Optional
 
 class o3_miniRound3Solution:
     @staticmethod
@@ -3445,13 +3382,8 @@ class o3_miniRound3Solution:
                 return s
         except ValueError:
             return None
-import csv
-import re
-import io
-import chardet
 from dateutil import parser as date_parser
-from collections import Counter
-from typing import List, Optional, Dict
+from typing import List, Optional
 
 class gpt4oRound3Solution:
     @staticmethod
@@ -3662,13 +3594,8 @@ class gpt4oRound3Solution:
             return f"{num:.2f}".rstrip('0').rstrip('.') if '.' in str(num) else str(int(num))
         except ValueError:
             return number_str
-import csv
-import re
-import io
-import chardet
 from dateutil import parser as date_parser
-from collections import Counter
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Any
 
 class claude37Round3Solution:
     @staticmethod
@@ -4139,14 +4066,7 @@ class claude37Round3Solution:
         except ValueError:
             # If conversion fails, return original
             return number_str
-import csv
-import re
-import io
-import chardet
-from dateutil import parser
-from collections import Counter
-from typing import List, Tuple, Optional, Dict, Any
-from datetime import datetime
+from typing import List, Optional, Any
 
 class mistral_largeRound3Solution:
     @staticmethod
@@ -4378,7 +4298,7 @@ class mistral_largeRound3Solution:
                 clean_rows.append(clean_row)
 
             return clean_rows
-        except Exception as e:
+        except Exception:
             # Fallback: manual parsing
             rows = []
             for line in lines:
@@ -4618,13 +4538,8 @@ class mistral_largeRound3Solution:
             return field
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import csv
-import re
-import io
-import chardet
 from dateutil import parser as date_parser
-from collections import Counter
-from typing import List, Optional, Dict
+from typing import List, Optional
 
 class o3_miniRound4Solution:
     @staticmethod
@@ -4967,13 +4882,8 @@ def format_number(num_str: str) -> Optional[str]:
             return s
     except ValueError:
         return None
-import csv
-import re
-import io
-import chardet
 from dateutil import parser as date_parser
-from collections import Counter
-from typing import List, Optional, Dict
+from typing import List, Optional
 
 class gpt4oRound4Solution:
     @staticmethod
@@ -5181,13 +5091,8 @@ class gpt4oRound4Solution:
             return f"{num:.2f}".rstrip('0').rstrip('.') if '.' in str(num) else str(int(num))
         except ValueError:
             return number_str
-import csv
-import re
-import io
-import chardet
 from dateutil import parser as date_parser
-from collections import Counter
-from typing import List, Optional, Dict, Any, Union
+from typing import List, Optional, Any, Union
 
 class claude37Round4Solution:
     @staticmethod
@@ -5641,13 +5546,8 @@ class claude37Round4Solution:
                 return str(num).rstrip('0').rstrip('.') if '.' in str(num) else str(num)
         except ValueError:
             return None
-import csv
-import re
-import io
-import chardet
 from dateutil import parser as date_parser
-from collections import Counter
-from typing import List, Optional, Dict
+from typing import List, Optional
 
 class mistral_largeRound4Solution:
     @staticmethod
@@ -5879,7 +5779,7 @@ class mistral_largeRound4Solution:
                 clean_rows.append(clean_row)
 
             return clean_rows
-        except Exception as e:
+        except Exception:
             # Fallback: manual parsing
             rows = []
             for line in lines:
@@ -6102,13 +6002,8 @@ class mistral_largeRound4Solution:
             return str(round(value, 6)).rstrip('0').rstrip('.') if '.' in str(round(value, 6)) else str(int(value))
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import csv
-import re
-import io
-import chardet
 from dateutil import parser as date_parser
-from collections import Counter
-from typing import List, Optional, Dict, Union, Any
+from typing import List, Optional, Union, Any
 
 class o3_miniRound5Solution:
     @staticmethod
@@ -6529,13 +6424,8 @@ class o3_miniRound5Solution:
                 return formatted
         except ValueError:
             return None
-import csv
-import re
-import io
-import chardet
 from dateutil import parser as date_parser
-from collections import Counter
-from typing import List, Optional, Dict, Union
+from typing import List, Optional, Union
 
 class gpt4oRound5Solution:
     @staticmethod
@@ -6893,13 +6783,8 @@ class gpt4oRound5Solution:
             return f"{num:.2f}".rstrip('0').rstrip('.') if '.' in str(num) else str(int(num))
         except ValueError:
             return number_str
-import csv
-import re
-import io
-import chardet
 from dateutil import parser as date_parser
-from collections import Counter
-from typing import List, Optional, Dict, Union, Any
+from typing import List, Optional, Union, Any
 
 class claude37Round5Solution:
     @staticmethod
@@ -7377,13 +7262,8 @@ class claude37Round5Solution:
                 return str(float_value)
         except Exception:
             return number_str
-import csv
-import re
-import io
-import chardet
 from dateutil import parser as date_parser
-from collections import Counter
-from typing import List, Optional, Dict, Union
+from typing import List, Optional, Union
 from datetime import datetime
 
 class mistral_largeRound5Solution:
@@ -7617,7 +7497,7 @@ class mistral_largeRound5Solution:
                 clean_rows.append(clean_row)
 
             return clean_rows
-        except Exception as e:
+        except Exception:
             # Fallback: manual parsing
             rows = []
             for line in lines:

@@ -5,7 +5,6 @@ import csv
 import re
 import io
 import chardet
-from collections import Counter
 from dateutil import parser as date_parser
 
 class o3_miniRound2Solution:

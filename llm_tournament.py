@@ -25,9 +25,7 @@ import argparse
 import traceback
 import statistics
 import subprocess
-import textwrap
-import threading
-from typing import List, Dict, Tuple, Any, Optional, Union, Set
+from typing import List, Dict, Tuple, Any, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -577,7 +575,7 @@ class LLMTournament:
                 # If we're seeing an unsupported parameter error, try to adapt
                 if "Unsupported parameter" in str(e):
                     error_details = str(e)
-                    logger.info(f"Detected unsupported parameter error. Adapting request for next attempt.")
+                    logger.info("Detected unsupported parameter error. Adapting request for next attempt.")
                     
                     # Extract unsupported parameter name if possible
                     param_match = re.search(r"'([^']+)' is not supported", error_details)
@@ -980,7 +978,7 @@ Your implementation should be complete and ready to use without modification.
                     
                 # Clean model name for use as a class name
                 clean_model_name = re.sub(r'[^a-zA-Z0-9]', '_', model_name)
-                class_name = f"{clean_model_name.title()}Round{round_num}Solution"
+                f"{clean_model_name.title()}Round{round_num}Solution"
                 
                 # With the new LLM-powered extract_code, we should already have a properly formatted class
                 # Just add the class directly to our solution_classes list
@@ -1108,7 +1106,7 @@ if __name__ == "__main__":
 """
         
         # Create a test runner script (unchanged)
-        test_runner = f"""#!/usr/bin/env python3
+        test_runner = """#!/usr/bin/env python3
 \"\"\"
 LLM Tournament Test Runner
 
@@ -1137,7 +1135,7 @@ def main():
         "--output-dir", "output_results_for_each_round_and_model"
     ]
     
-    print(f"Running: {{' '.join(cmd)}}")
+    print(f"Running: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
     
 if __name__ == "__main__":

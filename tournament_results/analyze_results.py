@@ -7,11 +7,10 @@ It creates plots and tables comparing the performance of different models
 across rounds.
 """
 
-import os
 import json
 import argparse
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 # Optional import for visualization
 try:
@@ -185,7 +184,7 @@ def create_visualizations(metrics: Dict[str, Any], output_dir: str) -> None:
         # Save the plot
         plt.savefig(output_dir / "execution_time_by_round.png")
     
-    print(f"Visualizations saved to: {{output_dir}}")
+    print("Visualizations saved to: {output_dir}")
 
 def main():
     """Main function"""

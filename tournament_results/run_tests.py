@@ -5,7 +5,6 @@ LLM Tournament Test Runner
 This script runs the test suite on the provided test file.
 """
 
-import os
 import subprocess
 import argparse
 from pathlib import Path

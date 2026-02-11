@@ -4,7 +4,7 @@ import io
 import chardet
 from dateutil import parser as date_parser
 from collections import Counter
-from typing import List, Optional, Dict, Any
+from typing import List
 
 class claude37Round3Solution:
     @staticmethod

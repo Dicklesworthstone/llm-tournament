@@ -236,7 +236,7 @@ class mistral_largeRound4Solution:
                 clean_rows.append(clean_row)
 
             return clean_rows
-        except Exception as e:
+        except Exception:
             # Fallback: manual parsing
             rows = []
             for line in lines:

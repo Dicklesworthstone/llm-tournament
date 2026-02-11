@@ -3,9 +3,6 @@ import re
 import io
 import chardet
 import dateutil.parser
-from datetime import datetime
-import unicodedata
-import locale
 
 class claude37Round0Solution:
     @staticmethod

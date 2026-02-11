@@ -4,7 +4,7 @@ import io
 import chardet
 from dateutil import parser
 from collections import Counter
-from typing import List, Tuple, Optional, Dict, Any
+from typing import List, Optional, Dict, Any
 
 class claude37Round1Solution:
     @staticmethod
@@ -236,7 +236,7 @@ class claude37Round1Solution:
                 clean_rows.append(clean_row)
             
             return clean_rows
-        except Exception as e:
+        except Exception:
             # Fallback: manual parsing
             rows = []
             for line in lines:
