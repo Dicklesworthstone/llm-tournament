@@ -143,4 +143,4 @@ This workflow will:
 
 ## License
 
-MIT License
+MIT License (with OpenAI/Anthropic Rider). See [LICENSE](LICENSE).
